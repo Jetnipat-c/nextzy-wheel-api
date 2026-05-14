@@ -16,3 +16,14 @@ export class Player {
     return this.totalPoints >= Player.MAX_POINTS;
   }
 }
+
+export interface PlayerWithRewards {
+  id: string;
+  username: string;
+  totalPoints: number;
+  createdAt: Date;
+  rewards: {
+    points: number;
+    claimed: boolean;
+  }[];
+}
