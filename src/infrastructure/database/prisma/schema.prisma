@@ -8,12 +8,6 @@ datasource db {
   provider = "postgresql"
 }
 
-enum Checkpoint {
-  POINTS_500
-  POINTS_1000
-  POINTS_10000
-}
-
 model Player {
   id          String   @id @default(uuid())
   username    String
@@ -39,13 +33,13 @@ model SpinResult {
 }
 
 model RewardClaim {
-  id         String     @id @default(uuid())
-  playerId   String     @map("player_id")
-  checkpoint Checkpoint
-  claimedAt  DateTime   @default(now()) @map("claimed_at")
+  id        String   @id @default(uuid())
+  playerId  String   @map("player_id")
+  points    Int
+  claimedAt DateTime @default(now()) @map("claimed_at")
 
   player Player @relation(fields: [playerId], references: [id])
 
-  @@unique([playerId, checkpoint])
+  @@unique([playerId, points])
   @@map("reward_claims")
 }
