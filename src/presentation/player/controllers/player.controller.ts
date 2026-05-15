@@ -1,7 +1,8 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 
 import { LoginPlayerDto } from '@presentation/player/dtos/login-player.dto';
-import { PlayerResponseDto } from '@presentation/player/dtos/player-response.dto';
+import { LoginResponseDto } from '@presentation/player/dtos/login-response.dto';
+import { PlayerProfileResponseDto } from '@presentation/player/dtos/player-profile-response.dto';
 
 import { GetPlayerUseCase } from '@application/use-cases/player/get-player.use-case';
 import { LoginPlayerUseCase } from '@application/use-cases/player/login-player.use-case';
@@ -16,7 +17,12 @@ export class PlayerController {
   @Post('login')
   async login(@Body() dto: LoginPlayerDto) {
     const player = await this.loginPlayer.execute({ username: dto.username });
-    const playerWithRewards = await this.getPlayer.execute({ id: player.id });
-    return PlayerResponseDto.fromEntity(playerWithRewards);
+    return LoginResponseDto.fromEntity(player);
+  }
+
+  @Get(':id/profile')
+  async profile(@Param('id') id: string) {
+    const player = await this.getPlayer.execute({ id });
+    return PlayerProfileResponseDto.fromEntity(player);
   }
 }
