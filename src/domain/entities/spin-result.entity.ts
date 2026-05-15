@@ -8,3 +8,7 @@ export class SpinResult {
     public readonly createdAt: Date,
   ) {}
 }
+
+export interface SpinResultWithUsername extends SpinResult {
+  username: string;
+}
