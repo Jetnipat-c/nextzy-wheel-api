@@ -10,7 +10,7 @@ import { RewardClaimRepository } from '@domain/repositories/reward-claim.reposit
 export class RewardClaimPrismaRepository implements RewardClaimRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async save(rewardClaim: RewardClaim): Promise<RewardClaim> {
+  async claim(rewardClaim: RewardClaim): Promise<RewardClaim> {
     const row = await this.prisma.rewardClaim.create({
       data: {
         id: rewardClaim.id,
@@ -25,8 +25,20 @@ export class RewardClaimPrismaRepository implements RewardClaimRepository {
   async findByPlayerId(playerId: string): Promise<RewardClaim[]> {
     const rows = await this.prisma.rewardClaim.findMany({
       where: { playerId },
+      orderBy: { claimedAt: 'desc' },
     });
     return rows.map((row) => this.toEntity(row));
+  }
+
+  async findByPlayerIdAndPoints(
+    playerId: string,
+    points: number,
+  ): Promise<RewardClaim | null> {
+    const row = await this.prisma.rewardClaim.findUnique({
+      where: { playerId_points: { playerId, points } },
+    });
+    if (!row) return null;
+    return this.toEntity(row);
   }
 
   private toEntity(row: {

@@ -1,4 +1,4 @@
-export const WHEEL_SEGMENTS = [300, 500, 1000, 3000];
+export { WHEEL_SEGMENTS } from '@domain/constants/game.constants';
 
 export class SpinResult {
   constructor(
