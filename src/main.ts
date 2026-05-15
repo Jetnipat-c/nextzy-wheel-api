@@ -8,7 +8,8 @@ import { NestFactory } from '@nestjs/core';
 
 import { configuration } from '@infrastructure/config/configuration';
 
-import { AppException } from '@presentation/common/exceptions/app.exception';
+import { AppException } from '@application/exceptions/app.exception';
+
 import { AllExceptionsFilter } from '@presentation/common/filters/all-exception.filter';
 import { ResponseInterceptor } from '@presentation/common/interceptors/response.interceptor';
 
