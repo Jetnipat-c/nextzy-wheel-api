@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { Response } from 'express';
 
-import { AppException } from '@presentation/common/exceptions/app.exception';
+import { AppException } from '@application/exceptions/app.exception';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {

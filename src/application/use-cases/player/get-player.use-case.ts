@@ -1,6 +1,6 @@
 import { HttpStatus, Inject, Injectable } from '@nestjs/common';
 
-import { AppException } from '@presentation/common/exceptions/app.exception';
+import { AppException } from '@application/exceptions/app.exception';
 
 import { PlayerWithRewards } from '@domain/entities/player.entity';
 

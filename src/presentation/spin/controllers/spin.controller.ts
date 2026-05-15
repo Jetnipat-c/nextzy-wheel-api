@@ -1,25 +1,33 @@
 import { Controller, Get, Param, Post, Query } from '@nestjs/common';
 
 import { RecordSpinUseCase } from '@application/use-cases/spin/spin-wheel.use-case';
+import { GetMySpinsUseCase } from '@application/use-cases/spin/get-my-spins.use-case';
 
+import { PaginationDto } from '@presentation/common/dtos/pagination.dto';
 import { SpinResponseDto } from '@presentation/spin/dtos/spin-response.dto';
 
 @Controller({ path: 'players', version: '1' })
 export class SpinController {
-  constructor(private readonly spinWheel: RecordSpinUseCase) {}
+  constructor(
+    private readonly spinWheel: RecordSpinUseCase,
+    private readonly getMySpins: GetMySpinsUseCase,
+  ) {}
 
-  @Post(':playerId/spin')
+  @Post(':playerId/spins')
   async spin(@Param('playerId') playerId: string) {
     const spinResult = await this.spinWheel.execute({ playerId });
     return SpinResponseDto.fromEntity(spinResult);
   }
 
-  @Get(':playerId/spin')
-  async getPlayerSpins(
+  @Get(':playerId/spins')
+  async mySpins(
     @Param('playerId') playerId: string,
-    @Query('page') page = 1,
-    @Query('limit') limit = 20,
+    @Query() pagination: PaginationDto,
   ) {
-    // get-player-spins.use-case (ยังไม่ได้สร้าง)
+    const result = await this.getMySpins.execute({ playerId, pagination });
+    return {
+      ...result,
+      data: result.data.map((spin) => SpinResponseDto.fromEntity(spin)),
+    };
   }
 }

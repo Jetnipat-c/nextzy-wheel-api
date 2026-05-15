@@ -1,12 +1,14 @@
 import { Injectable } from '@nestjs/common';
 
 import { PrismaService } from '@infrastructure/database/prisma/prisma.service';
-
-import { PaginationOptions } from '@domain/common/pagination';
-import { SpinResult } from '@domain/entities/spin-result.entity';
-
-import { SpinResultRepository } from '@domain/repositories/spin-result.repository';
 import { PrismaTransaction } from '@infrastructure/database/prisma/prisma-unit-of-work';
+
+import {
+  SpinResult,
+  SpinResultWithUsername,
+} from '@domain/entities/spin-result.entity';
+import { PaginatedResult, PaginationOptions } from '@domain/common/pagination';
+import { SpinResultRepository } from '@domain/repositories/spin-result.repository';
 
 @Injectable()
 export class SpinResultPrismaRepository implements SpinResultRepository {
@@ -30,23 +32,59 @@ export class SpinResultPrismaRepository implements SpinResultRepository {
   async findByPlayerId(
     playerId: string,
     pagination?: PaginationOptions,
-  ): Promise<SpinResult[]> {
-    const rows = await this.prisma.spinResult.findMany({
-      where: { playerId },
-      orderBy: { createdAt: 'desc' },
-      skip: pagination?.skip,
-      take: pagination?.take,
-    });
-    return rows.map((row) => this.toEntity(row));
+  ): Promise<PaginatedResult<SpinResult>> {
+    const page = pagination?.page ?? 1;
+    const limit = pagination?.limit ?? 20;
+
+    const [rows, total] = await this.prisma.$transaction([
+      this.prisma.spinResult.findMany({
+        where: { playerId },
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.spinResult.count({ where: { playerId } }),
+    ]);
+
+    return {
+      data: rows.map((row) => this.toEntity(row)),
+      meta: {
+        total,
+        total_pages: Math.ceil(total / limit),
+        current_page: page,
+        limit,
+      },
+    };
   }
 
-  async findAll(pagination?: PaginationOptions): Promise<SpinResult[]> {
-    const rows = await this.prisma.spinResult.findMany({
-      orderBy: { createdAt: 'desc' },
-      skip: pagination?.skip,
-      take: pagination?.take,
-    });
-    return rows.map((row) => this.toEntity(row));
+  async findAll(
+    pagination?: PaginationOptions,
+  ): Promise<PaginatedResult<SpinResultWithUsername>> {
+    const page = pagination?.page ?? 1;
+    const limit = pagination?.limit ?? 20;
+
+    const [rows, total] = await this.prisma.$transaction([
+      this.prisma.spinResult.findMany({
+        include: { player: { select: { username: true } } },
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.spinResult.count(),
+    ]);
+
+    return {
+      data: rows.map((row) => ({
+        ...this.toEntity(row),
+        username: row.player.username,
+      })),
+      meta: {
+        total,
+        total_pages: Math.ceil(total / limit),
+        current_page: page,
+        limit,
+      },
+    };
   }
 
   private toEntity(row: {
