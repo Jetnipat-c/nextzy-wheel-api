@@ -22,6 +22,67 @@ export class PlayerPrismaRepository implements PlayerRepository {
     return this.toEntity(row);
   }
 
+  async upsertByUsername(username: string): Promise<Player> {
+    const existing = await this.prisma.player.findFirst({
+      where: { username },
+    });
+    if (existing) return this.toEntity(existing);
+
+    const row = await this.prisma.player.create({
+      data: {
+        id: crypto.randomUUID(),
+        username,
+        totalPoints: 0,
+        createdAt: new Date(),
+      },
+    });
+    return this.toEntity(row);
+  }
+
+  async bulkUpsertUsernames(usernames: string[]): Promise<Map<string, string>> {
+    const existing = await this.prisma.player.findMany({
+      where: { username: { in: usernames } },
+      select: { id: true, username: true },
+    });
+
+    const map = new Map<string, string>(
+      existing.map((p) => [p.username, p.id]),
+    );
+
+    const newUsernames = usernames.filter((u) => !map.has(u));
+    if (newUsernames.length > 0) {
+      const now = new Date();
+      const newPlayers = newUsernames.map((u) => ({
+        id: crypto.randomUUID(),
+        username: u,
+        totalPoints: 0,
+        createdAt: now,
+      }));
+      await this.prisma.player.createMany({
+        data: newPlayers,
+        skipDuplicates: true,
+      });
+      for (const p of newPlayers) {
+        map.set(p.username, p.id);
+      }
+    }
+
+    return map;
+  }
+
+  async recalculateTotalPoints(): Promise<void> {
+    await this.prisma.$executeRawUnsafe(`
+      UPDATE players
+      SET total_points = LEAST(s.total, 10000)
+      FROM (
+        SELECT player_id, SUM(points_earned) AS total
+        FROM spin_results
+        GROUP BY player_id
+      ) s
+      WHERE players.id = s.player_id
+    `);
+  }
+
   async save(player: Player, tx?: PrismaTransaction): Promise<Player> {
     const client = tx ?? this.prisma;
     const row = await client.player.upsert({

@@ -29,6 +29,18 @@ export class SpinResultPrismaRepository implements SpinResultRepository {
     return this.toEntity(row);
   }
 
+  async bulkInsert(spinResults: SpinResult[]): Promise<void> {
+    await this.prisma.spinResult.createMany({
+      data: spinResults.map((s) => ({
+        id: s.id,
+        playerId: s.playerId,
+        points: s.points,
+        createdAt: s.createdAt,
+      })),
+      skipDuplicates: true,
+    });
+  }
+
   async findByPlayerId(
     playerId: string,
     pagination?: PaginationOptions,

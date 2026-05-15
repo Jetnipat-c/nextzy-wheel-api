@@ -8,6 +8,7 @@ export const SPIN_RESULT_REPOSITORY = Symbol('SPIN_RESULT_REPOSITORY');
 
 export interface SpinResultRepository {
   save(spinResult: SpinResult, tx?: unknown): Promise<SpinResult>;
+  bulkInsert(spinResults: SpinResult[]): Promise<void>;
   findByPlayerId(
     playerId: string,
     pagination?: PaginationOptions,
