@@ -24,7 +24,7 @@ model Player {
 model SpinResult {
   id           String   @id @default(uuid())
   playerId     String   @map("player_id")
-  pointsEarned Int      @map("points_earned")
+  points Int      @map("points_earned")
   createdAt    DateTime @default(now()) @map("created_at")
 
   player Player @relation(fields: [playerId], references: [id])

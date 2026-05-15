@@ -10,7 +10,7 @@ import { RewardClaimRepository } from '@domain/repositories/reward-claim.reposit
 export class RewardClaimPrismaRepository implements RewardClaimRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(rewardClaim: RewardClaim): Promise<RewardClaim> {
+  async save(rewardClaim: RewardClaim): Promise<RewardClaim> {
     const row = await this.prisma.rewardClaim.create({
       data: {
         id: rewardClaim.id,

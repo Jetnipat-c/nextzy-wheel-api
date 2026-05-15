@@ -4,6 +4,7 @@ import { Player } from '@domain/entities/player.entity';
 import type { PlayerRepository } from '@domain/repositories/player.repository';
 
 import { PrismaService } from '@infrastructure/database/prisma/prisma.service';
+import { PrismaTransaction } from '@infrastructure/database/prisma/prisma-unit-of-work';
 
 @Injectable()
 export class PlayerPrismaRepository implements PlayerRepository {
@@ -21,8 +22,9 @@ export class PlayerPrismaRepository implements PlayerRepository {
     return this.toEntity(row);
   }
 
-  async save(player: Player): Promise<Player> {
-    const row = await this.prisma.player.upsert({
+  async save(player: Player, tx?: PrismaTransaction): Promise<Player> {
+    const client = tx ?? this.prisma;
+    const row = await client.player.upsert({
       where: { id: player.id },
       create: {
         id: player.id,
