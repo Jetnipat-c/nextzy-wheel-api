@@ -4,10 +4,8 @@ import { AppException } from '@application/exceptions/app.exception';
 
 import { PrismaUnitOfWork } from '@infrastructure/database/prisma/prisma-unit-of-work';
 
-import {
-  SpinResult,
-  WHEEL_SEGMENTS,
-} from '@domain/entities/spin-result.entity';
+import { SpinResult } from '@domain/entities/spin-result.entity';
+import { WHEEL_SEGMENTS } from '@domain/constants/game.constants';
 import { PLAYER_REPOSITORY } from '@domain/repositories/player.repository';
 import type { PlayerRepository } from '@domain/repositories/player.repository';
 import { SPIN_RESULT_REPOSITORY } from '@domain/repositories/spin-result.repository';
@@ -15,6 +13,7 @@ import type { SpinResultRepository } from '@domain/repositories/spin-result.repo
 
 export interface RecordSpinInput {
   playerId: string;
+  points: number;
 }
 
 @Injectable()
@@ -37,17 +36,22 @@ export class RecordSpinUseCase {
       );
     }
 
-    const points =
-      WHEEL_SEGMENTS[Math.floor(Math.random() * WHEEL_SEGMENTS.length)];
+    if (!WHEEL_SEGMENTS.includes(input.points)) {
+      throw new AppException(
+        'INVALID_SPIN_POINTS',
+        `Points must be one of: ${WHEEL_SEGMENTS.join(', ')}`,
+        HttpStatus.BAD_REQUEST,
+      );
+    }
 
     const spinResult = new SpinResult(
       crypto.randomUUID(),
       input.playerId,
-      points,
+      input.points,
       new Date(),
     );
 
-    player.addPoints(points);
+    player.addPoints(input.points);
 
     await this.unitOfWork.execute(async (tx) => {
       await this.spinResultRepository.save(spinResult, tx);
