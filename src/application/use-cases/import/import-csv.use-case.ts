@@ -3,8 +3,8 @@ import { Readable } from 'stream';
 import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 
 import { SpinResult } from '@domain/entities/spin-result.entity';
-import { PLAYER_REPOSITORY } from '@domain/repositories/player.repository';
-import type { PlayerRepository } from '@domain/repositories/player.repository';
+import { PLAYER_BULK_REPOSITORY } from '@domain/repositories/player-bulk.repository';
+import type { PlayerBulkRepository } from '@domain/repositories/player-bulk.repository';
 import { SPIN_RESULT_REPOSITORY } from '@domain/repositories/spin-result.repository';
 import type { SpinResultRepository } from '@domain/repositories/spin-result.repository';
 
@@ -32,8 +32,8 @@ export class ImportCsvUseCase {
   private readonly logger = new Logger(ImportCsvUseCase.name);
 
   constructor(
-    @Inject(PLAYER_REPOSITORY)
-    private readonly playerRepository: PlayerRepository,
+    @Inject(PLAYER_BULK_REPOSITORY)
+    private readonly playerRepository: PlayerBulkRepository,
     @Inject(SPIN_RESULT_REPOSITORY)
     private readonly spinResultRepository: SpinResultRepository,
   ) {}

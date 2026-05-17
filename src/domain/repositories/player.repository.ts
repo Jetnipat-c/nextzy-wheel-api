@@ -7,6 +7,4 @@ export interface PlayerRepository {
   findByUsername(username: string): Promise<Player | null>;
   save(player: Player, tx?: unknown): Promise<Player>;
   upsertByUsername(username: string): Promise<Player>;
-  bulkUpsertUsernames(usernames: string[]): Promise<Map<string, string>>;
-  recalculateTotalPoints(): Promise<void>;
 }

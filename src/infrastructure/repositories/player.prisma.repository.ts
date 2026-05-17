@@ -2,12 +2,15 @@ import { Injectable } from '@nestjs/common';
 
 import { Player } from '@domain/entities/player.entity';
 import type { PlayerRepository } from '@domain/repositories/player.repository';
+import type { PlayerBulkRepository } from '@domain/repositories/player-bulk.repository';
 
 import { PrismaService } from '@infrastructure/database/prisma/prisma.service';
 import { PrismaTransaction } from '@infrastructure/database/prisma/prisma-unit-of-work';
 
 @Injectable()
-export class PlayerPrismaRepository implements PlayerRepository {
+export class PlayerPrismaRepository
+  implements PlayerRepository, PlayerBulkRepository
+{
   constructor(private readonly prisma: PrismaService) {}
 
   async findById(id: string): Promise<Player | null> {

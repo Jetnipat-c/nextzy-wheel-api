@@ -11,8 +11,8 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 
-import { PLAYER_REPOSITORY } from '@domain/repositories/player.repository';
-import type { PlayerRepository } from '@domain/repositories/player.repository';
+import { PLAYER_BULK_REPOSITORY } from '@domain/repositories/player-bulk.repository';
+import type { PlayerBulkRepository } from '@domain/repositories/player-bulk.repository';
 
 import { AppException } from '@application/exceptions/app.exception';
 import { ImportCsvUseCase } from '@application/use-cases/import/import-csv.use-case';
@@ -23,8 +23,8 @@ export class ImportController {
 
   constructor(
     private readonly importCsvUseCase: ImportCsvUseCase,
-    @Inject(PLAYER_REPOSITORY)
-    private readonly playerRepository: PlayerRepository,
+    @Inject(PLAYER_BULK_REPOSITORY)
+    private readonly playerRepository: PlayerBulkRepository,
   ) {}
 
   @Post('csv')

@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 
-import { PLAYER_REPOSITORY } from '@domain/repositories/player.repository';
+import { PLAYER_BULK_REPOSITORY } from '@domain/repositories/player-bulk.repository';
 import { SPIN_RESULT_REPOSITORY } from '@domain/repositories/spin-result.repository';
 
 import { PlayerPrismaRepository } from '@infrastructure/repositories/player.prisma.repository';
@@ -15,7 +15,7 @@ import { ImportController } from '@presentation/import/controllers/import.contro
   providers: [
     ImportCsvUseCase,
     {
-      provide: PLAYER_REPOSITORY,
+      provide: PLAYER_BULK_REPOSITORY,
       useClass: PlayerPrismaRepository,
     },
     {
