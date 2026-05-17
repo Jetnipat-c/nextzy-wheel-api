@@ -27,23 +27,6 @@ export class PlayerPrismaRepository
     return this.toEntity(row);
   }
 
-  async upsertByUsername(username: string): Promise<Player> {
-    const existing = await this.prisma.player.findFirst({
-      where: { username: { equals: username, mode: 'insensitive' } },
-    });
-    if (existing) return this.toEntity(existing);
-
-    const row = await this.prisma.player.create({
-      data: {
-        id: crypto.randomUUID(),
-        username,
-        totalPoints: 0,
-        createdAt: new Date(),
-      },
-    });
-    return this.toEntity(row);
-  }
-
   async bulkUpsertUsernames(usernames: string[]): Promise<Map<string, string>> {
     const lowerUsernames = usernames.map((u) => u.toLowerCase());
     const existing = await this.prisma.$queryRaw<

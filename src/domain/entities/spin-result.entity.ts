@@ -1,5 +1,3 @@
-export { WHEEL_SEGMENTS } from '@domain/constants/game.constants';
-
 export class SpinResult {
   constructor(
     public readonly id: string,
