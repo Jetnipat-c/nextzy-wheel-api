@@ -17,14 +17,16 @@ export class PlayerPrismaRepository implements PlayerRepository {
   }
 
   async findByUsername(username: string): Promise<Player | null> {
-    const row = await this.prisma.player.findFirst({ where: { username } });
+    const row = await this.prisma.player.findFirst({
+      where: { username: { equals: username, mode: 'insensitive' } },
+    });
     if (!row) return null;
     return this.toEntity(row);
   }
 
   async upsertByUsername(username: string): Promise<Player> {
     const existing = await this.prisma.player.findFirst({
-      where: { username },
+      where: { username: { equals: username, mode: 'insensitive' } },
     });
     if (existing) return this.toEntity(existing);
 
@@ -40,16 +42,24 @@ export class PlayerPrismaRepository implements PlayerRepository {
   }
 
   async bulkUpsertUsernames(usernames: string[]): Promise<Map<string, string>> {
-    const existing = await this.prisma.player.findMany({
-      where: { username: { in: usernames } },
-      select: { id: true, username: true },
-    });
+    const lowerUsernames = usernames.map((u) => u.toLowerCase());
+    const existing = await this.prisma.$queryRaw<
+      { id: string; username: string }[]
+    >`SELECT id, username FROM players WHERE LOWER(username) = ANY(${lowerUsernames}::text[])`;
 
-    const map = new Map<string, string>(
-      existing.map((p) => [p.username, p.id]),
+    const lowerToId = new Map<string, string>(
+      existing.map((p) => [p.username.toLowerCase(), p.id]),
     );
 
-    const newUsernames = usernames.filter((u) => !map.has(u));
+    const map = new Map<string, string>();
+    for (const u of usernames) {
+      const id = lowerToId.get(u.toLowerCase());
+      if (id) map.set(u, id);
+    }
+
+    const newUsernames = usernames.filter(
+      (u) => !lowerToId.has(u.toLowerCase()),
+    );
     if (newUsernames.length > 0) {
       const now = new Date();
       const newPlayers = newUsernames.map((u) => ({
