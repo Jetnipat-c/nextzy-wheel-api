@@ -81,16 +81,16 @@ export class PlayerPrismaRepository implements PlayerRepository {
   }
 
   async recalculateTotalPoints(): Promise<void> {
-    await this.prisma.$executeRawUnsafe(`
+    await this.prisma.$executeRaw`
       UPDATE players
-      SET total_points = LEAST(s.total, 10000)
+      SET total_points = LEAST(s.total, ${Player.MAX_POINTS})
       FROM (
         SELECT player_id, SUM(points_earned) AS total
         FROM spin_results
         GROUP BY player_id
       ) s
       WHERE players.id = s.player_id
-    `);
+    `;
   }
 
   async save(player: Player, tx?: PrismaTransaction): Promise<Player> {
