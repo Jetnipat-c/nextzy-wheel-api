@@ -16,16 +16,13 @@ RUN pnpm run build
 # ── Stage 2: Production ─────────────────────────────────────────
 FROM node:22-alpine AS runner
 
-RUN npm install -g pnpm
-
 WORKDIR /app
 
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --no-frozen-lockfile --prod
-
+COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/src/generated ./src/generated
 COPY --from=builder /app/src/infrastructure/database/prisma ./src/infrastructure/database/prisma
+COPY --from=builder /app/package.json ./
 COPY prisma.config.ts ./
 
 ENV NODE_ENV=production
