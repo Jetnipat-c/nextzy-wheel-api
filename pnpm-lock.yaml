@@ -3,11 +3,6 @@ lockfileVersion: '9.0'
 settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
-  onlyBuiltDependencies:
-    - '@nestjs/core'
-    - '@prisma/engines'
-    - prisma
-    - unrs-resolver
 
 importers:
 
