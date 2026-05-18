@@ -1,0 +1,2 @@
+export const WHEEL_SEGMENTS = [300, 500, 1000, 3000];
+export const VALID_CHECKPOINTS = [500, 1000, 10000];

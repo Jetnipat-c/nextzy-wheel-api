@@ -1,0 +1,45 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../../../generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Player {
+  id          String   @id @default(uuid())
+  username    String
+  totalPoints Int      @default(0) @map("total_points")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  spinResults  SpinResult[]
+  rewardClaims RewardClaim[]
+
+  @@index([username])
+  @@map("players")
+}
+
+model SpinResult {
+  id           String   @id @default(uuid())
+  playerId     String   @map("player_id")
+  points Int      @map("points_earned")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  player Player @relation(fields: [playerId], references: [id])
+
+  @@map("spin_results")
+}
+
+model RewardClaim {
+  id        String   @id @default(uuid())
+  playerId  String   @map("player_id")
+  points    Int
+  claimedAt DateTime @default(now()) @map("claimed_at")
+
+  player Player @relation(fields: [playerId], references: [id])
+
+  @@unique([playerId, points])
+  @@map("reward_claims")
+}
