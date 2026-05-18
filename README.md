@@ -1,98 +1,171 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Nextzy Wheel API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Backend for the Nextzy point-collection game — a spin-the-wheel gamification app where players accumulate points, unlock reward checkpoints, and compete on a global leaderboard.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Tech Stack
 
-## Description
+- **Runtime**: Node.js 22, TypeScript
+- **Framework**: NestJS 11
+- **Database**: PostgreSQL via Prisma 7
+- **Deploy**: Google Cloud Run + Cloud SQL
+- **CI/CD**: GitHub Actions
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+---
 
-## Project setup
+## Architecture
 
-```bash
-$ pnpm install
+Clean Architecture with strict dependency rules:
+
+```
+src/
+├── domain/           # Pure business logic — no framework or DB imports
+│   ├── entities/     # Player, SpinResult, RewardClaim
+│   ├── repositories/ # Interfaces only (PlayerRepository, SpinResultRepository, ...)
+│   └── constants/    # WHEEL_SEGMENTS, reward checkpoints
+├── application/
+│   └── use-cases/    # One file per use case, one execute() method
+│       ├── player/   # get-or-create-player
+│       ├── spin/     # spin-wheel
+│       ├── reward/   # claim-reward
+│       └── import/   # import-csv
+├── infrastructure/
+│   ├── config/       # configuration.ts
+│   ├── database/     # PrismaService, schema.prisma, migrations
+│   └── repositories/ # Prisma implementations of domain interfaces
+└── presentation/
+    ├── player/       # PlayerController
+    ├── spin/         # SpinController
+    ├── reward/       # RewardController
+    └── import/       # ImportController
 ```
 
-## Compile and run the project
+**Dependency rule**: `presentation` → `application` → `domain` ← `infrastructure`
+
+### Database Schema
+
+| Table | Description |
+|---|---|
+| `players` | Player profile with cumulative `total_points` (max 10,000) |
+| `spin_results` | Each spin record with `points_earned` and timestamp |
+| `reward_claims` | Claimed reward checkpoints per player (unique per player+points) |
+
+---
+
+## Features
+
+### Player
+- `POST /api/v1/players/login` — Get or create a player by username (case-insensitive match)
+
+### Spin
+- `POST /api/v1/players/:playerId/spins` — Record a spin result sent from the frontend (`300`, `500`, `1000`, `3000`)
+- `GET /api/v1/players/:playerId/spins` — Get spin history for a player
+- `GET /api/v1/spins` — Get global spin history (all players)
+
+### Reward
+- `POST /api/v1/players/:playerId/rewards` — Claim a reward checkpoint (`500`, `1000`, `10000`)
+- `GET /api/v1/players/:playerId/rewards` — Get claimed rewards for a player
+
+### Import
+- `POST /api/v1/import/csv` — Bulk import spin history from CSV file (multipart/form-data, field: `file`)
+- `POST /api/v1/import/recalculate-points` — Recalculate `total_points` for all players from spin history
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 22+
+- pnpm 10+
+- PostgreSQL database
+
+### Installation
 
 ```bash
-# development
-$ pnpm run start
-
-# watch mode
-$ pnpm run start:dev
-
-# production mode
-$ pnpm run start:prod
+pnpm install
 ```
 
-## Run tests
+### Environment Variables
+
+Create a `.env` file at the project root:
+
+```env
+DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/DATABASE
+PORT=3000
+NODE_ENV=development
+```
+
+### Database Setup
 
 ```bash
-# unit tests
-$ pnpm run test
+# Apply migrations
+pnpm prisma migrate dev
 
-# e2e tests
-$ pnpm run test:e2e
-
-# test coverage
-$ pnpm run test:cov
+# Regenerate Prisma client after schema changes
+pnpm prisma generate
 ```
+
+### Running
+
+```bash
+# Development (watch mode)
+pnpm run start:dev
+
+# Production build
+pnpm run build
+pnpm run start:prod
+```
+
+### Testing
+
+```bash
+pnpm run test           # unit tests
+pnpm run test:cov       # with coverage
+pnpm run test:e2e       # end-to-end tests
+```
+
+---
+
+## CSV Import Format
+
+The CSV file must have the following columns:
+
+```
+nickname,point,datetime
+playerA,300,2024-01-01T10:00:00Z
+playerB,1000,2024-01-02T12:00:00Z
+```
+
+- `nickname` — player username (case-insensitive, matched against existing players)
+- `point` — must be one of `300`, `500`, `1000`, `3000`
+- `datetime` — ISO 8601 format (optional, defaults to import time)
+
+Rows with invalid points or missing nickname are skipped. Import is processed in batches of 1,000 rows.
+
+---
 
 ## Deployment
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+Deployed to **Google Cloud Run** with automated CI/CD via GitHub Actions on push to `main`.
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+Pipeline steps:
+1. Install dependencies
+2. Connect to Cloud SQL via Auth Proxy
+3. Run Prisma migrations
+4. Build and push Docker image to Artifact Registry
+5. Deploy to Cloud Run
 
-```bash
-$ pnpm install -g @nestjs/mau
-$ mau deploy
-```
+### Required GitHub Secrets
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+| Secret | Description |
+|---|---|
+| `GCP_PROJECT_ID` | Google Cloud project ID |
+| `GCP_SA_KEY` | Service account JSON key |
+| `CLOUD_SQL_INSTANCE` | Cloud SQL instance name |
+| `MIGRATION_DATABASE_URL` | PostgreSQL URL for running migrations |
 
-## Resources
+### Required GCP Secrets (Secret Manager)
 
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+| Secret | Description |
+|---|---|
+| `DATABASE_URL` | PostgreSQL connection URL for production |
