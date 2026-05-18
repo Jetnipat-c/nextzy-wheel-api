@@ -78,4 +78,6 @@ jobs:
             --max-instances 5 \
             --memory 512Mi \
             --cpu 1 \
-            --port 8080
+            --port 8080 \
+            --timeout 300 \
+            --request-timeout 300
