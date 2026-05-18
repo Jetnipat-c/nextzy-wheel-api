@@ -29,9 +29,11 @@ export class ImportController {
 
   @Post('csv')
   @Version('1')
-  @HttpCode(HttpStatus.ACCEPTED)
+  @HttpCode(HttpStatus.OK)
   @UseInterceptors(FileInterceptor('file'))
-  importCsv(@UploadedFile() file: Express.Multer.File): { message: string } {
+  async importCsv(
+    @UploadedFile() file: Express.Multer.File,
+  ): Promise<{ imported: number; skipped: number }> {
     if (!file) {
       throw new AppException(
         'FILE_REQUIRED',
@@ -40,21 +42,11 @@ export class ImportController {
       );
     }
 
-    this.importCsvUseCase
-      .execute({ buffer: file.buffer })
-      .then(({ imported, skipped }) => {
-        this.logger.log(
-          `CSV import done — imported: ${imported}, skipped: ${skipped}`,
-        );
-      })
-      .catch((err: unknown) => {
-        this.logger.error(
-          'CSV import failed',
-          err instanceof Error ? err.stack : err,
-        );
-      });
-
-    return { message: 'Import started' };
+    const result = await this.importCsvUseCase.execute({ buffer: file.buffer });
+    this.logger.log(
+      `CSV import done — imported: ${result.imported}, skipped: ${result.skipped}`,
+    );
+    return result;
   }
 
   @Post('recalculate-points')
