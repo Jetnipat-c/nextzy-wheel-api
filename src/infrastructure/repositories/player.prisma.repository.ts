@@ -79,6 +79,19 @@ export class PlayerPrismaRepository
     `;
   }
 
+  async incrementPoints(
+    playerId: string,
+    points: number,
+    tx?: PrismaTransaction,
+  ): Promise<void> {
+    const client = tx ?? this.prisma;
+    await client.$executeRaw`
+      UPDATE players
+      SET total_points = LEAST(total_points + ${points}, ${Player.MAX_POINTS})
+      WHERE id = ${playerId}
+    `;
+  }
+
   async save(player: Player, tx?: PrismaTransaction): Promise<Player> {
     const client = tx ?? this.prisma;
     const row = await client.player.upsert({

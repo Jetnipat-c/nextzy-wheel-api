@@ -51,11 +51,9 @@ export class RecordSpinUseCase {
       new Date(),
     );
 
-    player.addPoints(input.points);
-
     await this.unitOfWork.execute(async (tx) => {
       await this.spinResultRepository.save(spinResult, tx);
-      await this.playerRepository.save(player, tx);
+      await this.playerRepository.incrementPoints(input.playerId, input.points, tx);
     });
 
     return spinResult;
