@@ -26,6 +26,16 @@ export class LoginPlayerUseCase {
       new Date(),
     );
 
-    return this.playerRepository.save(player);
+    try {
+      return await this.playerRepository.save(player);
+    } catch (e: unknown) {
+      // Concurrent login race: another request created this username first.
+      // P2002 = Prisma unique constraint violation.
+      if ((e as { code?: string })?.code === 'P2002') {
+        const raceWinner = await this.playerRepository.findByUsername(input.username);
+        if (raceWinner) return raceWinner;
+      }
+      throw e;
+    }
   }
 }

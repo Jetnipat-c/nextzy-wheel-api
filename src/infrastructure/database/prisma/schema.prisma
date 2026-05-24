@@ -17,7 +17,7 @@ model Player {
   spinResults  SpinResult[]
   rewardClaims RewardClaim[]
 
-  @@index([username])
+  @@unique([username])
   @@map("players")
 }
 

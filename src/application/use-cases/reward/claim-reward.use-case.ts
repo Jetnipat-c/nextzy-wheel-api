@@ -68,6 +68,17 @@ export class ClaimRewardUseCase {
       new Date(),
     );
 
-    return this.rewardClaimRepository.claim(rewardClaim);
+    try {
+      return await this.rewardClaimRepository.claim(rewardClaim);
+    } catch (e: unknown) {
+      if ((e as { code?: string })?.code === 'P2002') {
+        throw new AppException(
+          'REWARD_ALREADY_CLAIMED',
+          'This checkpoint reward has already been claimed',
+          HttpStatus.CONFLICT,
+        );
+      }
+      throw e;
+    }
   }
 }
